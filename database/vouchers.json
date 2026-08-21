@@ -8,7 +8,9 @@
   "TIRZZ-939C62F7": {
     "amount": 20,
     "maxUses": 75,
-    "usedBy": [],
+    "usedBy": [
+      7613900027
+    ],
     "createdAt": "2026-08-21T23:53:27.044Z"
   }
 }
