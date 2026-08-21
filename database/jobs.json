@@ -1316,5 +1316,16 @@
     "status": "success",
     "created_at": "2026-08-21T16:28:42.553Z",
     "completed_at": "2026-08-21T16:39:13.367Z"
+  },
+  "mt37idrn5apyr": {
+    "job_id": "mt37idrn5apyr",
+    "release_id": 374555836,
+    "release_tag": "build-mt37idrn5apyr",
+    "run_id": 32506899056,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-21T17:12:02.479Z"
   }
 }
