@@ -16,7 +16,9 @@
   "TIRZZ-888EE06F": {
     "amount": 20,
     "maxUses": 25,
-    "usedBy": [],
+    "usedBy": [
+      7613900027
+    ],
     "createdAt": "2026-08-22T07:00:43.457Z"
   }
 }
