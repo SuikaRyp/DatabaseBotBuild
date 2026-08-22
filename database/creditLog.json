@@ -789,5 +789,12 @@
     "amount": 20,
     "reason": "Redeem voucher",
     "at": "2026-08-22T02:20:48.295Z"
+  },
+  {
+    "userId": 7378128077,
+    "type": "spend",
+    "amount": 1,
+    "reason": "Build Flutter (ZIP)",
+    "at": "2026-08-22T10:17:20.396Z"
   }
 ]
