@@ -1506,5 +1506,16 @@
     "status": "failed",
     "created_at": "2026-08-22T10:17:29.670Z",
     "completed_at": "2026-08-22T10:18:04.753Z"
+  },
+  "mt48jb8coj2a8": {
+    "job_id": "mt48jb8coj2a8",
+    "release_id": 374899159,
+    "release_tag": "build-mt48jb8coj2a8",
+    "run_id": 32567691970,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-22T10:28:31.752Z"
   }
 }
