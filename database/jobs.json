@@ -1470,5 +1470,16 @@
     "status": "success",
     "created_at": "2026-08-22T06:54:28.794Z",
     "completed_at": "2026-08-22T07:00:53.764Z"
+  },
+  "mt41rjhmx98ae": {
+    "job_id": "mt41rjhmx98ae",
+    "release_id": 374860726,
+    "release_tag": "build-mt41rjhmx98ae",
+    "run_id": 32559264496,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-22T07:18:55.345Z"
   }
 }
