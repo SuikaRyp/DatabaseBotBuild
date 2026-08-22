@@ -1423,5 +1423,16 @@
     "status": "failed",
     "created_at": "2026-08-22T05:09:23.718Z",
     "completed_at": "2026-08-22T05:13:11.934Z"
+  },
+  "mt3xm1thjbvnt": {
+    "job_id": "mt3xm1thjbvnt",
+    "release_id": 374808989,
+    "release_tag": "build-mt3xm1thjbvnt",
+    "run_id": 32554182239,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-22T05:22:43.904Z"
   }
 }
