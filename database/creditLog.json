@@ -782,5 +782,12 @@
     "amount": 10000,
     "reason": "Diberikan owner",
     "at": "2026-08-22T01:03:59.010Z"
+  },
+  {
+    "userId": 7102515835,
+    "type": "earn",
+    "amount": 20,
+    "reason": "Redeem voucher",
+    "at": "2026-08-22T02:20:48.295Z"
   }
 ]
