@@ -894,5 +894,19 @@
     "amount": 1,
     "reason": "Rename All",
     "at": "2026-08-23T05:03:31.774Z"
+  },
+  {
+    "userId": 7613900027,
+    "type": "spend",
+    "amount": 1,
+    "reason": "Build Flutter (ZIP)",
+    "at": "2026-08-23T16:33:13.202Z"
+  },
+  {
+    "userId": 8868798253,
+    "type": "earn",
+    "amount": 5,
+    "reason": "Kredit awal (user baru)",
+    "at": "2026-08-23T17:09:40.596Z"
   }
 ]
