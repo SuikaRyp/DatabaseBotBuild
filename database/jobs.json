@@ -1589,5 +1589,16 @@
     "build_type": "release",
     "status": "pending",
     "created_at": "2026-08-23T05:10:48.329Z"
+  },
+  "mt5cpragdd6p1": {
+    "job_id": "mt5cpragdd6p1",
+    "release_id": 375120978,
+    "release_tag": "build-mt5cpragdd6p1",
+    "run_id": 32619805979,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-23T05:13:13.069Z"
   }
 }
