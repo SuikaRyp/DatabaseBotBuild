@@ -1659,5 +1659,16 @@
     "build_type": "release",
     "status": "pending",
     "created_at": "2026-08-25T02:02:40.812Z"
+  },
+  "mt80t78z7gsz0": {
+    "job_id": "mt80t78z7gsz0",
+    "release_id": 376101308,
+    "release_tag": "build-mt80t78z7gsz0",
+    "run_id": 32799905834,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-25T02:03:21.073Z"
   }
 }
