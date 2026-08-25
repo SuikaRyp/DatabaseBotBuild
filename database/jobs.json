@@ -1680,8 +1680,9 @@
     "user_id": 7613900027,
     "analyze_only": false,
     "build_type": "release",
-    "status": "pending",
-    "created_at": "2026-08-25T02:17:35.996Z"
+    "status": "success",
+    "created_at": "2026-08-25T02:17:35.996Z",
+    "completed_at": "2026-08-25T02:25:32.881Z"
   },
   "mt81l29vaqtn8": {
     "job_id": "mt81l29vaqtn8",
