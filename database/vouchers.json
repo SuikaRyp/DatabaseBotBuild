@@ -24,7 +24,9 @@
   "TIRZZ-A2138FDF": {
     "amount": 20,
     "maxUses": 100,
-    "usedBy": [],
+    "usedBy": [
+      8659578611
+    ],
     "createdAt": "2026-08-25T01:18:46.030Z"
   }
 }
