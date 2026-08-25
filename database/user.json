@@ -356,8 +356,8 @@
     "first_name": "⏤͟͟ 𝐃𝟗 || 𝗦𝘂𝗶𝗸𝗮 𝗞𝗶𝗻𝗴𝘀",
     "last_name": null,
     "joinedAt": "2026-08-21T16:24:15.018Z",
-    "lastSeenAt": "2026-08-25T08:09:16.218Z",
-    "startCount": 47
+    "lastSeenAt": "2026-08-25T11:32:47.995Z",
+    "startCount": 48
   },
   "7613900027": {
     "id": 7613900027,
@@ -465,6 +465,15 @@
     "last_name": null,
     "joinedAt": "2026-08-25T01:05:23.526Z",
     "lastSeenAt": "2026-08-25T01:05:23.526Z",
+    "startCount": 1
+  },
+  "8277963767": {
+    "id": 8277963767,
+    "username": "Monzo_Support_Service_Official32",
+    "first_name": "Support Monzo Banking Service",
+    "last_name": null,
+    "joinedAt": "2026-08-25T08:23:42.705Z",
+    "lastSeenAt": "2026-08-25T08:23:42.705Z",
     "startCount": 1
   }
 }
