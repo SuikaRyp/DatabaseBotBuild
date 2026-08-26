@@ -1753,5 +1753,16 @@
     "status": "failed",
     "created_at": "2026-08-25T23:17:26.218Z",
     "completed_at": "2026-08-25T23:17:50.100Z"
+  },
+  "mt9oyg7slg5ym": {
+    "job_id": "mt9oyg7slg5ym",
+    "release_id": 376912072,
+    "release_tag": "build-mt9oyg7slg5ym",
+    "run_id": 32936761756,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-26T06:07:03.540Z"
   }
 }
