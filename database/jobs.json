@@ -1975,5 +1975,16 @@
     "build_type": "release",
     "status": "pending",
     "created_at": "2026-08-26T12:13:41.801Z"
+  },
+  "mta2479ld37p0": {
+    "job_id": "mta2479ld37p0",
+    "release_id": 377110755,
+    "release_tag": "build-mta2479ld37p0",
+    "run_id": 32967589996,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-26T12:15:27.323Z"
   }
 }
