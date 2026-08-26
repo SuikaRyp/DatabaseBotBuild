@@ -1849,5 +1849,16 @@
     "status": "failed",
     "created_at": "2026-08-26T08:25:46.329Z",
     "completed_at": "2026-08-26T08:29:55.621Z"
+  },
+  "mt9uc18wwzlq7": {
+    "job_id": "mt9uc18wwzlq7",
+    "release_id": 376985765,
+    "release_tag": "build-mt9uc18wwzlq7",
+    "run_id": 32948713257,
+    "user_id": 7102515835,
+    "analyze_only": false,
+    "build_type": "release",
+    "status": "pending",
+    "created_at": "2026-08-26T08:37:35.383Z"
   }
 }
