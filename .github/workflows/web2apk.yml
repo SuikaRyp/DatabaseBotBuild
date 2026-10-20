@@ -1,0 +1,140 @@
+name: Web2APK Build
+
+# Dipicu bot Telegram (menu Build Aplikasi -> Web ke APK) lewat workflow_dispatch.
+# Mesin build = WebToApp (https://github.com/shiaho777/web-to-app): ApkBuilder
+# milik mereka dijalankan headless (lihat web2apk/W2aCliExportTest.kt) dan
+# menghasilkan APK yang sudah ditandatangani, sama seperti tombol "Build" di
+# aplikasi WebToApp.
+#
+# Sumber WebToApp:
+#   - kalau folder `web-to-app/` ADA di repo builder ini (hasil upload isi
+#     web-to-app-main.zip), itu yang dipakai;
+#   - kalau tidak ada, di-clone dari W2A_REPO @ W2A_REF (ubah di bawah).
+#
+# KEAMANAN: input dari user (nama app, URL) TIDAK BOLEH dipakai langsung di
+# `run:` lewat ${{ inputs.* }} (bisa jadi shell injection). Semua lewat env.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: "URL website yang dijadikan aplikasi"
+        required: true
+        type: string
+      app_name:
+        description: "Nama aplikasi"
+        required: true
+        type: string
+      package_name:
+        description: "Package name (kosong = otomatis)"
+        required: false
+        default: ""
+        type: string
+      version_name:
+        description: "Version name"
+        required: false
+        default: "1.0.0"
+        type: string
+      icon_url:
+        description: "URL ikon PNG/JPG (asset GitHub Release, opsional)"
+        required: false
+        default: ""
+        type: string
+      tag:
+        description: "Tag unik build (nama artifact)"
+        required: true
+        type: string
+
+env:
+  W2A_REPO: shiaho777/web-to-app
+  W2A_REF: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repo builder
+        uses: actions/checkout@v4
+
+      - name: Siapkan sumber WebToApp
+        run: |
+          if [ -f web-to-app/gradlew ]; then
+            echo "Pakai web-to-app/ dari repo builder."
+          else
+            git clone --depth 1 --branch "$W2A_REF" "https://github.com/$W2A_REPO.git" web-to-app
+          fi
+          test -f web-to-app/gradlew || { echo "::error::web-to-app/gradlew tidak ditemukan."; exit 1; }
+          chmod +x web-to-app/gradlew
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ""
+
+      - name: Install paket Android (sama dengan CI WebToApp)
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "cmake;3.22.1" \
+            "ndk;28.2.13676358"
+
+      - name: Setup Gradle (cache)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-provider: basic
+
+      - name: Unduh ikon (opsional)
+        env:
+          ICON_URL: ${{ inputs.icon_url }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/w2a"
+          if [ -n "$ICON_URL" ]; then
+            curl -L --fail -o "$RUNNER_TEMP/w2a/icon.img" "$ICON_URL" || echo "Ikon gagal diunduh, pakai ikon default."
+          fi
+
+      - name: Pasang W2aCliExportTest ke WebToApp
+        run: |
+          cp web2apk/W2aCliExportTest.kt \
+            web-to-app/app/src/test/java/com/webtoapp/core/apkbuilder/W2aCliExportTest.kt
+
+      # preBuild :app otomatis membangun template shell (:shell:assembleRelease
+      # + syncShellTemplateApk), jadi satu perintah ini cukup. Build pertama
+      # lama (~20-40 menit: NDK + R8); cache Gradle mempercepat build berikutnya.
+      - name: Build APK lewat ApkBuilder WebToApp
+        working-directory: web-to-app
+        env:
+          W2A_URL: ${{ inputs.app_url }}
+          W2A_NAME: ${{ inputs.app_name }}
+          W2A_PKG: ${{ inputs.package_name }}
+          W2A_VERSION: ${{ inputs.version_name }}
+          W2A_OUT_DIR: ${{ runner.temp }}/w2a/out
+        run: |
+          if [ -s "$RUNNER_TEMP/w2a/icon.img" ]; then export W2A_ICON="$RUNNER_TEMP/w2a/icon.img"; fi
+          ./gradlew --no-daemon --no-configuration-cache \
+            -Dkotlin.compiler.execution.strategy=in-process \
+            -PallowDebugSignedRelease=true \
+            :app:testStandardDebugUnitTest \
+            --tests "com.webtoapp.core.apkbuilder.W2aCliExportTest"
+
+      - name: Cek hasil
+        run: |
+          ls -la "$RUNNER_TEMP/w2a/out"
+          test -n "$(ls "$RUNNER_TEMP"/w2a/out/*.apk 2>/dev/null)" || { echo "::error::Tidak ada APK hasil build."; exit 1; }
+
+      - name: Upload APK sebagai artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ inputs.tag }}
+          path: ${{ runner.temp }}/w2a/out/*.apk
+          if-no-files-found: error
+          retention-days: 1
