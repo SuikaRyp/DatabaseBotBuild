@@ -1,8 +1,6 @@
+
 name: Flutter Build APK
 
-# Ditrigger oleh bot Telegram (wizz Build Bot) lewat workflow_dispatch.
-# Input dikirim oleh server.js -> triggerWorkflow(). Simpan file ini di repo target
-# (GITHUB_OWNER/GITHUB_REPO di .env bot) pada path: .github/workflows/flutter_build.yml
 on:
   workflow_dispatch:
     inputs:
@@ -11,7 +9,7 @@ on:
         required: true
         type: string
       tag:
-        description: "Tag unik build (dipakai untuk nama artifact & release cleanup)"
+        description: "Tag unik build"
         required: true
         type: string
       build_type:
@@ -24,17 +22,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Validasi input wajib
+        env:
+          ZIP_URL: ${{ inputs.zip_url }}
+          BUILD_TAG: ${{ inputs.tag }}
         run: |
-          if [ -z "${{ inputs.zip_url }}" ]; then
+          if [ -z "$ZIP_URL" ]; then
             echo "::error::Input zip_url kosong."
             exit 1
           fi
-          if [ -z "${{ inputs.tag }}" ]; then
+
+          if [ -z "$BUILD_TAG" ]; then
             echo "::error::Input tag kosong."
             exit 1
           fi
@@ -42,27 +45,33 @@ jobs:
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
+          distribution: temurin
           java-version: "17"
 
-      # PENTING — JANGAN naikkan versi ini ke >= 3.44 kecuali font_awesome_flutter
-      # di project kamu sudah di-upgrade ke v11+. Flutter 3.44 menjadikan class
-      # IconData "final" (tidak bisa di-extend), yang membuat font_awesome_flutter
-      # versi lama (mis. 10.12.0) gagal compile dengan error:
-      #   "The class 'IconData' can't be extended outside of its library
-      #    because it's a final class."
-      # 3.41.x adalah rilis stabil terakhir SEBELUM breaking change tersebut.
-      - name: Setup Flutter SDK (pinned 3.41.x, sebelum breaking change IconData final)
+      - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.9"
-          channel: "stable"
+          channel: stable
           cache: true
 
       - name: Download ZIP project
         env:
           ZIP_URL: ${{ inputs.zip_url }}
-        run: curl -L --fail -o project.zip "$ZIP_URL"
+        run: |
+          set -euo pipefail
+          curl --location --fail --show-error \
+            --retry 3 \
+            --retry-delay 2 \
+            --output project.zip \
+            "$ZIP_URL"
+
+          if [ ! -s project.zip ]; then
+            echo "::error::File ZIP kosong."
+            exit 1
+          fi
+
+          ls -lh project.zip
 
       - name: Validate ZIP archive
         run: |
@@ -71,29 +80,52 @@ jobs:
           import zipfile
 
           path = "project.zip"
+
           if not zipfile.is_zipfile(path):
               print("::error::File yang diunduh bukan arsip ZIP yang valid.")
               sys.exit(1)
 
-          with zipfile.ZipFile(path) as archive:
-              bad_member = archive.testzip()
-              if bad_member:
-                  print(f"::error::ZIP rusak: CRC gagal pada {bad_member}")
-                  sys.exit(1)
+          try:
+              with zipfile.ZipFile(path) as archive:
+                  entries = archive.infolist()
+                  files = [
+                      item for item in entries
+                      if not item.is_dir()
+                      and not item.filename.endswith("/")
+                  ]
 
-              print(f"ZIP valid: {len(archive.infolist())} entri ditemukan.")
+                  # Periksa CRC isi file saja.
+                  # Metadata direktori tidak divalidasi karena beberapa
+                  # pembuat ZIP menghasilkan ukuran/CRC direktori yang salah.
+                  for item in files:
+                      try:
+                          with archive.open(item, "r") as stream:
+                              while stream.read(1024 * 1024):
+                                  pass
+                      except Exception as exc:
+                          print(
+                              f"::error::ZIP rusak pada file "
+                              f"{item.filename}: {exc}"
+                          )
+                          sys.exit(1)
+
+                  print(
+                      f"Validasi selesai: {len(files)} file diperiksa; "
+                      f"{len(entries) - len(files)} entri direktori dilewati."
+                  )
+
+          except (zipfile.BadZipFile, OSError) as exc:
+              print(f"::error::Arsip ZIP tidak bisa dibaca: {exc}")
+              sys.exit(1)
           PY
 
       - name: Extract ZIP
         run: |
+          set -euo pipefail
           rm -rf project
           mkdir -p project
 
-          # Python menangani entri direktori tanpa membaca payload direktori
-          # yang pada beberapa ZIP memiliki metadata ukuran tidak konsisten.
           python3 - <<'PY'
-          import os
-          import sys
           import zipfile
           from pathlib import Path
           from shutil import copyfileobj
@@ -104,28 +136,40 @@ jobs:
           with zipfile.ZipFile(archive_path) as archive:
               for info in archive.infolist():
                   name = info.filename.replace("\\", "/")
-                  target = (destination / name).resolve()
 
-                  # Cegah path traversal (ZIP Slip).
-                  if target != destination and destination not in target.parents:
-                      raise SystemExit(f"::error::Path tidak aman di ZIP: {name}")
-
+                  # Abaikan entri direktori; buat direktori dari path file.
                   if info.is_dir() or name.endswith("/"):
-                      target.mkdir(parents=True, exist_ok=True)
                       continue
 
+                  target = (destination / name).resolve()
+
+                  # Cegah ZIP Slip / path traversal.
+                  if target != destination and destination not in target.parents:
+                      raise SystemExit(
+                          f"::error::Path tidak aman di ZIP: {name}"
+                      )
+
                   target.parent.mkdir(parents=True, exist_ok=True)
-                  with archive.open(info, "r") as source, open(target, "wb") as output:
-                      copyfileobj(source, output)
+
+                  try:
+                      with archive.open(info, "r") as source:
+                          with open(target, "wb") as output:
+                              copyfileobj(source, output)
+                  except Exception as exc:
+                      raise SystemExit(
+                          f"::error::Gagal mengekstrak {name}: {exc}"
+                      )
 
           print("Ekstraksi ZIP selesai.")
           PY
 
-          # Kalau isi ZIP cuma 1 folder pembungkus di root, naikkan isinya.
+          # Tangani ZIP yang membungkus project di satu folder.
           shopt -s nullglob dotglob
           entries=(project/*/)
-          if [ "${#entries[@]}" -eq 1 ] && [ -f "${entries[0]}pubspec.yaml" ]; then
-            tmp=$(mktemp -d)
+
+          if [ "${#entries[@]}" -eq 1 ] && \
+             [ -f "${entries[0]}pubspec.yaml" ]; then
+            tmp="$(mktemp -d)"
             mv "${entries[0]}"* "$tmp"/
             rm -rf project
             mv "$tmp" project
@@ -134,7 +178,10 @@ jobs:
       - name: Validasi pubspec.yaml
         run: |
           if [ ! -f project/pubspec.yaml ]; then
-            echo "::error::pubspec.yaml tidak ditemukan di dalam ZIP. Pastikan ZIP berisi project Flutter yang valid (pubspec.yaml di root project)."
+            echo "::error::pubspec.yaml tidak ditemukan di root project."
+            echo "Pastikan ZIP berisi project Flutter yang benar."
+            echo "Isi folder project:"
+            ls -la project
             exit 1
           fi
 
@@ -144,12 +191,23 @@ jobs:
 
       - name: Build APK
         working-directory: project
+        env:
+          BUILD_TYPE: ${{ inputs.build_type }}
         run: |
-          if [ "${{ inputs.build_type }}" = "debug" ]; then
-            flutter build apk --debug
-          else
-            flutter build apk --release
-          fi
+          set -euo pipefail
+
+          case "$BUILD_TYPE" in
+            debug)
+              flutter build apk --debug
+              ;;
+            release)
+              flutter build apk --release
+              ;;
+            *)
+              echo "::error::build_type harus debug atau release."
+              exit 1
+              ;;
+          esac
 
       - name: Upload APK sebagai artifact
         if: always()
@@ -159,4 +217,3 @@ jobs:
           path: project/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: warn
           retention-days: 1
-          
