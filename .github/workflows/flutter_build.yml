@@ -64,13 +64,64 @@ jobs:
           ZIP_URL: ${{ inputs.zip_url }}
         run: curl -L --fail -o project.zip "$ZIP_URL"
 
+      - name: Validate ZIP archive
+        run: |
+          python3 - <<'PY'
+          import sys
+          import zipfile
+
+          path = "project.zip"
+          if not zipfile.is_zipfile(path):
+              print("::error::File yang diunduh bukan arsip ZIP yang valid.")
+              sys.exit(1)
+
+          with zipfile.ZipFile(path) as archive:
+              bad_member = archive.testzip()
+              if bad_member:
+                  print(f"::error::ZIP rusak: CRC gagal pada {bad_member}")
+                  sys.exit(1)
+
+              print(f"ZIP valid: {len(archive.infolist())} entri ditemukan.")
+          PY
+
       - name: Extract ZIP
         run: |
           rm -rf project
           mkdir -p project
-          unzip -q project.zip -d project
 
-          # Kalau isi ZIP cuma 1 folder pembungkus di root, naikkan isinya
+          # Python menangani entri direktori tanpa membaca payload direktori
+          # yang pada beberapa ZIP memiliki metadata ukuran tidak konsisten.
+          python3 - <<'PY'
+          import os
+          import sys
+          import zipfile
+          from pathlib import Path
+          from shutil import copyfileobj
+
+          archive_path = Path("project.zip")
+          destination = Path("project").resolve()
+
+          with zipfile.ZipFile(archive_path) as archive:
+              for info in archive.infolist():
+                  name = info.filename.replace("\\", "/")
+                  target = (destination / name).resolve()
+
+                  # Cegah path traversal (ZIP Slip).
+                  if target != destination and destination not in target.parents:
+                      raise SystemExit(f"::error::Path tidak aman di ZIP: {name}")
+
+                  if info.is_dir() or name.endswith("/"):
+                      target.mkdir(parents=True, exist_ok=True)
+                      continue
+
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  with archive.open(info, "r") as source, open(target, "wb") as output:
+                      copyfileobj(source, output)
+
+          print("Ekstraksi ZIP selesai.")
+          PY
+
+          # Kalau isi ZIP cuma 1 folder pembungkus di root, naikkan isinya.
           shopt -s nullglob dotglob
           entries=(project/*/)
           if [ "${#entries[@]}" -eq 1 ] && [ -f "${entries[0]}pubspec.yaml" ]; then
